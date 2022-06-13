@@ -48,3 +48,20 @@ class SkillOfWarrior(models.Model):
     skill = models.ForeignKey('Skill', verbose_name='Умение', on_delete=models.CASCADE)
     warrior = models.ForeignKey('Warrior', verbose_name='Воин', on_delete=models.CASCADE)
     level = models.IntegerField(verbose_name='Уровень освоения умения')
+
+
+class PetsWarriors(models.Model):
+    name = models.CharField(max_length=30, verbose_name="Имя")
+
+
+class User(models.Model):
+    username = models.CharField(max_length=30, verbose_name='Name')
+    password = models.CharField(max_length=30, verbose_name='password')
+    first_name = models.CharField(max_length=30, verbose_name='first_name')
+    last_name = models.CharField(max_length=30, verbose_name='last_name')
+    tel = models.IntegerField(verbose_name='tel')
+
+
+class User_token(models.Model):
+    user_id = models.ForeignKey('User', on_delete=models.CASCADE)
+    auth_token = models.CharField(max_length=10, verbose_name='auth_token')

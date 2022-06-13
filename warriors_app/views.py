@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from .models import *
+from django.http import HttpResponse, JsonResponse
+from secrets import token_urlsafe
 
 
 class WarriorSerializer(serializers.ModelSerializer):
@@ -194,3 +196,67 @@ class WarriorUpdateView(generics.UpdateAPIView):
 class WarriorDestroyView(generics.DestroyAPIView):
     queryset = Warrior.objects.all()
     serializer = WarriorSerializer
+
+
+# user_name = "timon"
+# password = "12345"
+
+
+def authview(request):
+    username = request.GET.get('username')
+    password = request.GET.get('password')
+    user = User.objects.filter(username=username, password=password)
+    if user.count() == 0:
+        return JsonResponse({'Error': 'Unauthorized'})
+    else:
+        user = user[0]
+        token = token_urlsafe(10)
+        auth_token = User_token(user_id=user, auth_token=token)
+        auth_token.save()
+        print(token)
+        return JsonResponse({'auth_token': token, 'user_id': user.id})
+
+
+def userview(request):
+    token = request.headers['Authorization'].split()[1]
+    user_current = User_token.objects.filter(auth_token=token)
+    user_id = user_current[0].user_id.id
+    if request.method == 'GET':
+        return JsonResponse({'id': user_id, 'username': user_current[0].user_id.username,
+                             'password': user_current[0].user_id.password,
+                             'first_name': user_current[0].user_id.first_name,
+                             'last_name': user_current[0].user_id.last_name,
+                             'tel': user_current[0].user_id.tel})
+    elif request.method == 'POST':
+        user = User.objects.filter(username=request.POST.get('username'))
+        if user.count() == 0 or user.count() == 1 and user_current[0].user_id.username == user[0].username:
+            User.objects.filter(id=user_id).update(username=request.POST.get('username'), password=request.POST.get('password'),
+                          first_name=request.POST.get('first_name'),
+                          last_name=request.POST.get('last_name'),
+                          tel=request.POST.get('tel'))
+        else:
+            return JsonResponse({'Error': 'Username is already taken'})
+    return JsonResponse({'id': user_id})
+
+
+def signinview(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+    first_name = request.POST.get('first_name')
+    last_name = request.POST.get('last_name')
+    tel = request.POST.get('tel')
+
+    if request.method == 'POST' and username is not None and password is not None and first_name is not None \
+            and last_name is not None and tel is not None:
+        user = User.objects.filter(username=username)
+        if user.count() == 0:
+            user = User(username=username, password=password, first_name=first_name, last_name=last_name, tel=tel)
+            user.save()
+            token = token_urlsafe(10)
+            auth_token = User_token(user_id=user, auth_token=token)
+            auth_token.save()
+            return JsonResponse({'auth_token': token, 'user_id': user.id})
+        else:
+            return JsonResponse({'Error': 'Username is already taken'})
+    else:
+        return JsonResponse({'Error': 'Incorrect data'})

@@ -5,6 +5,7 @@ from .views import *
 app_name = "warriors_app"
 
 
+
 urlpatterns = [
     path('warriors/', WarriorAPIView.as_view()),
     path('profession/create/', ProfessionCreateView.as_view()),
@@ -16,5 +17,8 @@ urlpatterns = [
     path('warrior/<int:pk>', SingleWarriorView.as_view()),
     path('warrior/<int:pk>/update/', WarriorUpdateView.as_view()),
     path('warrior/<int:pk>/delete/', WarriorDestroyView.as_view()),
+    path('auth/', authview),
+    path('auth/users/me/', userview),
+    path('signin/', signinview),
 ]
 
